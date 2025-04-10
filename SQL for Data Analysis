@@ -1,0 +1,154 @@
+
+
+-- Create Customers Table
+CREATE TABLE Customers (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    email VARCHAR(100),
+    country VARCHAR(50)
+);
+
+-- Create Products Table
+CREATE TABLE Products (
+    product_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    category VARCHAR(50),
+    price DECIMAL(10,2)
+);
+
+-- Create Orders Table
+CREATE TABLE Orders (
+    order_id INT PRIMARY KEY,
+    customer_id INT,
+    product_id INT,
+    quantity INT,
+    order_date DATE,
+    FOREIGN KEY (customer_id) REFERENCES Customers(customer_id),
+    FOREIGN KEY (product_id) REFERENCES Products(product_id)
+);
+
+-- Insert Data into Customers
+INSERT INTO Customers VALUES
+(1, 'Alice', 'alice@example.com', 'USA'),
+(2, 'Bob', 'bob@example.com', 'UK'),
+(3, 'Charlie', 'charlie@example.com', 'India'),
+(4, 'David', 'david@example.com', 'Canada'),
+(5, 'Eva', 'eva@example.com', 'Germany'),
+(6, 'Frank', 'frank@example.com', 'France'),
+(7, 'Grace', 'grace@example.com', 'India'),
+(8, 'Henry', 'henry@example.com', 'USA'),
+(9, 'Ivy', 'ivy@example.com', 'UK'),
+(10, 'Jack', 'jack@example.com', 'Australia');
+
+-- Insert Data into Products
+INSERT INTO Products VALUES
+(101, 'Laptop', 'Electronics', 900),
+(102, 'Phone', 'Electronics', 500),
+(103, 'Book', 'Stationery', 20),
+(104, 'Tablet', 'Electronics', 300),
+(105, 'Pen', 'Stationery', 5),
+(106, 'Headphones', 'Electronics', 100);
+
+-- Insert Data into Orders
+INSERT INTO Orders VALUES
+(1001, 1, 101, 1, '2023-01-10'),
+(1002, 2, 103, 5, '2023-01-15'),
+(1003, 3, 102, 2, '2023-01-20'),
+(1004, 4, 105, 10, '2023-01-25'),
+(1005, 5, 106, 1, '2023-02-01'),
+(1006, 6, 101, 1, '2023-02-05'),
+(1007, 7, 104, 2, '2023-02-10'),
+(1008, 8, 103, 3, '2023-02-15'),
+(1009, 9, 102, 1, '2023-02-20'),
+(1010, 10, 105, 6, '2023-02-25'),
+(1011, 1, 106, 2, '2023-03-01'),
+(1012, 3, 104, 1, '2023-03-05'),
+(1013, 5, 103, 4, '2023-03-10'),
+(1014, 6, 105, 5, '2023-03-15'),
+(1015, 7, 102, 3, '2023-03-20');
+
+
+
+-- Show all customers from India
+SELECT * 
+FROM Customers
+WHERE country = 'India';
+
+-- List all orders placed after Feb 1, 2023
+SELECT * 
+FROM Orders
+WHERE order_date > '2023-02-01'
+ORDER BY order_date;
+
+
+--Total quantity of products ordered by each customer (with names)
+SELECT 
+    c.customer_id,
+    c.name AS customer_name,
+    SUM(o.quantity) AS total_quantity
+FROM Orders o
+JOIN Customers c ON o.customer_id = c.customer_id
+GROUP BY c.customer_id, c.name;
+
+-- Average price of products in each category
+SELECT 
+    category, 
+    ROUND(AVG(price), 2) AS avg_price
+FROM Products
+GROUP BY category;
+
+
+--Order details with customer and product names
+SELECT 
+    o.order_id, 
+    c.name AS customer_name, 
+    p.name AS product_name, 
+    o.quantity, 
+    o.order_date
+FROM Orders o
+JOIN Customers c ON o.customer_id = c.customer_id
+JOIN Products p ON o.product_id = p.product_id;
+
+--LEFT JOIN: Show all customers and their orders (if any)
+SELECT 
+    c.customer_id,
+    c.name AS customer_name,
+    o.order_id,
+    o.order_date
+FROM Customers c
+LEFT JOIN Orders o ON c.customer_id = o.customer_id;
+
+
+
+--  Customers who placed more than one order
+SELECT name
+FROM Customers
+WHERE customer_id IN (
+    SELECT customer_id
+    FROM Orders
+    GROUP BY customer_id
+    HAVING COUNT(order_id) > 1
+);
+
+
+
+-- Create view for order summary
+CREATE VIEW OrderSummary AS
+SELECT 
+    o.order_id,
+    c.name AS customer_name,
+    p.name AS product_name,
+    o.quantity,
+    p.price,
+    (o.quantity * p.price) AS total_amount
+FROM Orders o
+JOIN Customers c ON o.customer_id = c.customer_id
+JOIN Products p ON o.product_id = p.product_id;
+
+-- Select from view
+SELECT * FROM OrderSummary;
+
+
+-- Add indexes to improve query speed
+CREATE INDEX idx_customer_id ON Orders(customer_id);
+CREATE INDEX idx_product_id ON Orders(product_id);
